@@ -1,9 +1,8 @@
 import mediapipe as mp
 import cv2
 import numpy as np
-import uuid
-import os
-
+from src.shared_state import shared_state, lock
+from src.config import CFG
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
@@ -11,9 +10,6 @@ mp_hands = mp.solutions.hands
 joint_list = [[8, 7, 6], [12, 11, 10], [4, 3, 2]]
 
 
-class CFG:
-    WINDOW_WIDTH = 1280 #640
-    WINDOW_HEIGHT = 720 #480
 
 
 def draw_finger_angles(image, results, joint_list):
@@ -152,20 +148,50 @@ def hand_tracking():
                     # cv2.line(frame, (l_x2, l_y2), (r_x2, r_y2), (255, 253, 246), 2)
                     # cv2.line(frame, (l_x1, l_y1), (r_x1, r_y1), (255, 253, 246), 2)
                     right_plane_length = right_hand_plane["plane_height"]
-                    new_volume = round(right_plane_length / CFG.WINDOW_HEIGHT * 1.2, 2)
-                    print(new_volume)
+                    left_plane_length = left_hand_plane["plane_height"]
+                    with lock:
+                        shared_state['max_plane_height'] = max(left_plane_length, right_plane_length)
 
-                    num_points = 25
-                    for i in range(num_points + 1):
-                        t = i / num_points
+                    distance_between_planes = abs(
+                        np.linalg.norm(
+                            np.array([l_x1, l_y1]) - np.array([r_x1, r_y1])
+                        )
+                    )
+                    new_volume = round(right_plane_length / CFG.WINDOW_HEIGHT * 1.2, 2)
+                    with lock:
+                        shared_state["volume"] = new_volume
+
+                    bar_width = distance_between_planes // CFG.BINS
+                    spectrum = shared_state.get("spectrum", None)
+
+                    for i in range(CFG.BINS):
+                        t = i / CFG.BINS
                         btm_x = int((1 - t) * l_x2 + t * r_x2)
                         btm_y = int((1 - t) * l_y2 + t * r_y2)
                         top_x = int((1 - t) * l_x1 + t * r_x1)
                         top_y = int((1 - t) * l_y1 + t * r_y1)
 
-                        # cv2.circle(frame, (btm_x, btm_y), 5, (255, 253, 246), -1)
-                        # cv2.circle(frame, (top_x, top_y), 5, (255, 253, 246), -1)
-                        cv2.line(frame, (btm_x, btm_y), (top_x, top_y), (255, 253, 246), 2)
+                        if spectrum is not None:
+                            x = int((1 - t) * l_x1 + t * r_x1) # stabiled one
+                            bar_height = int(spectrum[i])
+
+                            gap_distance = (top_y - btm_y - bar_height) // 2
+
+                            
+                            y1 = int(btm_y +  gap_distance) 
+                            y2 = int(btm_y + bar_height + gap_distance) 
+                            cv2.line(
+                                frame,
+                                (x, y1),
+                                (x, y2),
+                                (255, 255, 255),
+                                2,
+                            )
+                        else:
+
+                            # cv2.circle(frame, (btm_x, btm_y), 5, (255, 253, 246), -1)
+                            # cv2.circle(frame, (top_x, top_y), 5, (255, 253, 246), -1)
+                            cv2.line(frame, (btm_x, btm_y), (top_x, top_y), (255, 253, 246), 2)
                 
             cv2.imshow("Hand Tracking", frame)
 

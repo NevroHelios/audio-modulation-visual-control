@@ -1,0 +1,4 @@
+class CFG:
+    WINDOW_WIDTH = 1280 #640
+    WINDOW_HEIGHT = 720 #480
+    BINS = 30
