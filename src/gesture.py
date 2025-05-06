@@ -7,7 +7,7 @@ from src.config import CFG
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
-joint_list = [[8, 7, 6], [12, 11, 10], [4, 3, 2]]
+joint_list = [[8, 9, 16]] # , [4, 9, 12], [4, 3, 2]
 
 
 
@@ -152,16 +152,15 @@ def hand_tracking():
                     with lock:
                         shared_state['max_plane_height'] = max(left_plane_length, right_plane_length)
 
-                    distance_between_planes = abs(
-                        np.linalg.norm(
-                            np.array([l_x1, l_y1]) - np.array([r_x1, r_y1])
-                        )
-                    )
+                    # distance_between_planes = abs(
+                    #     np.linalg.norm(
+                    #         np.array([l_x1, l_y1]) - np.array([r_x1, r_y1])
+                    #     )
+                    # )
                     new_volume = round(right_plane_length / CFG.WINDOW_HEIGHT * 1.2, 2)
                     with lock:
                         shared_state["volume"] = new_volume
 
-                    bar_width = distance_between_planes // CFG.BINS
                     spectrum = shared_state.get("spectrum", None)
 
                     for i in range(CFG.BINS):
