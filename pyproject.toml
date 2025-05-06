@@ -1,0 +1,16 @@
+[project]
+name = "vision"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "bosesoundtouchapi>=1.0.76",
+    "librosa>=0.11.0",
+    "libsoundtouch>=0.8.0",
+    "mediapipe>=0.10.21",
+    "opencv-contrib-python>=4.11.0.86",
+    "pyaudio>=0.2.14",
+    "pydub>=0.25.1",
+    "simpleaudio>=1.0.4",
+]
